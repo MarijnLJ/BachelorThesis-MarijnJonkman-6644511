@@ -38,7 +38,7 @@ def outbreak(p):
         generation += 1                           
     return infected, immune
 
-p_values = np.linspace(0, 1, 22)[1:-1]      # Provides several values (ordered) between 0 and 1, where 0 and 1 are removed
+p_values = np.linspace(0, 1, 102)[1:-1]      # Provides several values (ordered) between 0 and 1, where 0 and 1 are removed
 p_values = p_values.tolist()           # Stores the values in a list
 expectation_values = [] 
 best_q_values = []
