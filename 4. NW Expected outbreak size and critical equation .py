@@ -153,8 +153,8 @@ plt.show()
 
 # Plot zeta against p
 plt.plot(plot_p_vals, zeta_values, color = 'b', linewidth = 2)                     
-plt.text(0.45, 25, '$R_0>1$', fontsize = 18)
-plt.text(0.015, 2, '$R_0<1$', fontsize = 12)
+plt.text(0.45, 25, '$R^*>1$', fontsize = 18)
+plt.text(0.015, 2, '$R^*<1$', fontsize = 12)
 plt.xlabel('Infection Probability (p)')
 plt.ylabel('Expected number of shortcuts ($\zeta$)')
 plt.xlim(0, 1)
