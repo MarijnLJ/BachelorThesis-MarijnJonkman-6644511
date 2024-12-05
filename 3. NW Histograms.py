@@ -106,7 +106,7 @@ for p in p_values:
     # If there are no valid outbreaks, the expected outbreak size is calculated without lambda
     if valid_outbreaks != 0:
         lambda_ = valid_outbreaks / (valid_outbreak_sum + m * b - a * (2 * num_sim - k))
-        
+      
         # Setting the bin size to 1
         bin_edges = np.arange(np.min(sizes_combined), np.max(sizes_combined) + 2, 1)
         counts, bins = np.histogram(sizes_combined, bins=bin_edges, density=True)
@@ -128,8 +128,11 @@ for p in p_values:
         
         # Define the line that approximates the histograms using lambda
         x_values = np.linspace(0, max(sizes_combined)+1, 100)
-        line =  lambda_ * np.exp(-lambda_ * x_values)
-        line /= np.trapz(line, x_values)
+        
+        # Adding a scaling factor
+        scaling_factor = 1 / (np.exp(-lambda_ * a) - np.exp(-lambda_ * b))
+        
+        line =  scaling_factor * lambda_ * np.exp(-lambda_ * x_values)
         
         plt.plot(x_values, line, color='red', label='Fit Line')
         plt.legend()
