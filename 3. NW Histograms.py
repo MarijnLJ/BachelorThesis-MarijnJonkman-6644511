@@ -40,21 +40,19 @@ def outbreak(p):
 
 p_values = np.linspace(0, 1, 22)[1:-1]      # Provides several values (ordered) between 0 and 1, where 0 and 1 are removed
 p_values = p_values.tolist()           # Stores the values in a list
-expectation_values = [] 
-best_q_values = []
-a = 2.5       # Minimal size of a side of an outbreak
+a = 5       # Minimal size of a side of an outbreak
 b = 750     # Maximal size of a side of an outbreak
 
-num_sim = 100 # The amount of simulations that are run
+num_sim = 10000 # The amount of simulations that are run
 
 for p in p_values:
     k = 0
     m = 0
-    sizes_combined = []  # To store sizes of outbreaks
     not_extinct_count = 0  # Count of non-extinct simulations
     valid_outbreak_sum = 0
-    smaller_outbreak_sum = 0
-    number_active_sides = 0
+    outbreak_size_left_list = []
+    outbreak_size_right_list = []
+    outbreak_size_right_or_left_list = []
     
     for _ in range(num_sim):
         infected, immune = outbreak(p) # Determine the lists of infected and immune nodes
@@ -62,7 +60,7 @@ for p in p_values:
         
         # Separate the outbreak into negative (left) and positive (right) individuals
         left_side = [individual for individual in total_outbreak if individual < 0]
-        right_side = [individual for individual in total_outbreak if individual >= 0]
+        right_side = [individual for individual in total_outbreak if individual > 0]
         
         outbreak_size_left = len(left_side) # Size of the left side
         outbreak_size_right = len(right_side) # Size of the right side
@@ -85,54 +83,49 @@ for p in p_values:
         if outbreak_size_right > a and outbreak_size_right <= b:
             valid_outbreak_sum += outbreak_size_right
         
-        # Calculate the sum of all sides of an oubreak smaller than b
-        if outbreak_size_left <= b:
-            smaller_outbreak_sum += outbreak_size_left
-        if outbreak_size_right <= b:
-            smaller_outbreak_sum += outbreak_size_right
-        
-        outbreak_size = outbreak_size_left + outbreak_size_right
+        outbreak_size = outbreak_size_left + outbreak_size_right + 1
         
         # If the outbreak is not extinct we up the count and do not add the outbreak size to sizes_combined
         if len(infected) != 0:
             not_extinct_count += 1
             continue
         
-        sizes_combined.append(outbreak_size)
+        outbreak_size_left_list.append(outbreak_size_left)
+        outbreak_size_right_list.append(outbreak_size_right)
+        outbreak_size_right_or_left_list.append(outbreak_size_right)
+        outbreak_size_right_or_left_list.append(outbreak_size_left)
     
     valid_outbreaks = 2 * num_sim - m - k     # number of sides that are interesting for our analysis
+    rho = ((2 * num_sim) - k) / (2 * num_sim)
     
     # If there are valid outbreaks, we calculate the estimator: lambda. 
-    # If there are no valid outbreaks, the expected outbreak size is calculated without lambda
     if valid_outbreaks != 0:
         lambda_ = valid_outbreaks / (valid_outbreak_sum + m * b - a * (2 * num_sim - k))
-      
+        
         # Setting the bin size to 1
-        bin_edges = np.arange(np.min(sizes_combined), np.max(sizes_combined) + 2, 1)
-        counts, bins = np.histogram(sizes_combined, bins=bin_edges, density=True)
+        bin_edges = np.arange(np.min(outbreak_size_left_list)-0.5, np.max(outbreak_size_left_list) + 1.5, 1)
+        counts, bins = np.histogram(outbreak_size_left_list, bins=bin_edges, density=True)
     
         # Plot the histogram with default color
-        plt.hist(sizes_combined, bins=bin_edges, density=True, alpha=0.7, color='gray', edgecolor='black')
+        plt.hist(outbreak_size_right_or_left_list , bins=bin_edges, density=True, alpha=0.7, color='gray', edgecolor='black')
     
         # Manually adjust the color of each bin
         for i in range(len(bins) - 1):
             bin_center = (bins[i] + bins[i + 1]) / 2
-            color = 'lightgray' if bin_center <= (2 * a) else 'dodgerblue'
+            color = 'lightgray' if bin_center <= a else 'dodgerblue'
             plt.bar(bins[i], counts[i], width=bins[i+1] - bins[i], align='edge', color=color, edgecolor='black', alpha=0.7)
     
-        plt.title(f'Histogram of Outbreak Sizes for p = {p:.2f}')
+        plt.title(f'Histogram of Sizes of Both Sides of an Outbreak for p = {p:.2f}')
         plt.xlabel('Outbreak Size')
         plt.ylabel('Density')
-        plt.xlim(left = 0)
+        plt.xlim(0, 50)
         plt.ylim(bottom = 0)
         
         # Define the line that approximates the histograms using lambda
-        x_values = np.linspace(0, max(sizes_combined)+1, 100)
-        
+        x_values = np.linspace(0, max(outbreak_size_right_or_left_list)+1, 1000)
         # Adding a scaling factor
-        scaling_factor = 1 / (np.exp(-lambda_ * a) - np.exp(-lambda_ * b))
-        
-        line =  scaling_factor * lambda_ * np.exp(-lambda_ * x_values)
+        scaling_factor = rho * np.exp((a + 1) * lambda_)
+        line = scaling_factor * lambda_ * np.exp(-lambda_ * x_values)
         
         plt.plot(x_values, line, color='red', label='Fit Line')
         plt.legend()
